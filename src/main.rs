@@ -82,39 +82,92 @@ unsafe fn dealloc(loc: u16) { // if pointer[0] is < a pointer
 
     if new_loc == POINTERS[0] {
         POINTERS[0] = loc;
+
+        for i in 1..POINTERS.len() {
+            if SIZES[i as usize] == 0 {
+                break;
+            }
+            else if POINTERS[0] - SIZES[i as usize] == POINTERS[i as usize] {
+                POINTERS[0] -= SIZES[i as usize];
+                SIZES[i as usize] = 0;
+                break;
+            }
+        }
+
         return;
     }
 
-    for i in 0..POINTERS.len() {
+    for mut i in 1..POINTERS.len() { // Breaks if the new loc is a different pointer
         if SIZES[i as usize] == 0 {
             break;
         }
-        else if SIZES[i as usize] == new_loc {
+        else if POINTERS[i as usize] == new_loc {
+            dbg!(i);
+            dbg!(POINTERS[i as usize]);
             POINTERS[i as usize] = loc;
             SIZES[i as usize] += _size + 2;
+
+            for j in 1..POINTERS.len() { // Make sure the past pointer is also merged
+                if SIZES[j as usize] == 0 {
+                    break;
+                }
+                else if POINTERS[j as usize] + SIZES[j as usize] == POINTERS[i as usize] {
+                    POINTERS[i as usize] = 0;
+                    SIZES[j as usize] += SIZES[i as usize];
+                    SIZES[i as usize] = 0;
+
+                    if LAST_POINTER as usize == i {
+                        LAST_POINTER -= 1;
+                    }
+                    else {
+                        // move the last pointer to the current pointers location
+                        POINTERS[i as usize] = POINTERS[LAST_POINTER as usize];
+                        SIZES[i as usize] = SIZES[LAST_POINTER as usize];
+
+                        // clear the last pointer
+                        POINTERS[LAST_POINTER as usize] = 0; // Breaks if it is the last pointer : FIX THIS
+                        SIZES[LAST_POINTER as usize] = 0;
+
+                        // decrement the last pointer
+                        LAST_POINTER -= 1;
+                    }
+                    
+                    break;
+                }
+            }
+
             return;
         }
     }
 
+    LAST_POINTER += 1;
     POINTERS[LAST_POINTER as usize] = loc;
     SIZES[LAST_POINTER as usize] = _size + 2;
-    LAST_POINTER += 1;
 
     return;
 }
 
 fn main() {unsafe{
-    let test1 = alloc(10);
-    let test2 = alloc(10);
-    let test3 = alloc(10);
+    let test = alloc(8);
+    let test1 = alloc(8);
+    let test2 = alloc(8);
+    let test3 = alloc(8);
+    let test4 = alloc(8);
 
-    dealloc(test2);
     dealloc(test3);
+    dbg!(LAST_POINTER);
+    dealloc(test1);
+    dbg!(LAST_POINTER);
+    dealloc(test2);
+    dbg!(LAST_POINTER);
+    dealloc(test4);
+    dbg!(POINTERS[0]);
+    dbg!(LAST_POINTER);
 
-    let test4 = alloc(10);
-
-    for i in 0..10 {
+    for i in 1..3 {
         dbg!(POINTERS[i]);
     }
 }}
 
+// Still breaks if an inner chunk is deallocated, then the outer chunk is deallocated (pointer[0] doesent go down)
+// test overwriting last part thing (i think its fine due to 0 indexing)
