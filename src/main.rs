@@ -26,9 +26,6 @@ unsafe fn write(mut loc: u16, data: &[u8]) {
 unsafe fn alloc(_size: u16) -> u16 {
     for i in 1..POINTERS.len() { // start at 1 because 0 is the tail
 
-        dbg!(i);
-        dbg!(SIZES[i as usize]);
-
         // if the size is 0, then we have reached the end of the important pointers
         if SIZES[i as usize] == 0 {
             break;
@@ -38,15 +35,11 @@ unsafe fn alloc(_size: u16) -> u16 {
         if SIZES[i as usize] >= _size + 2 {
             let loc = POINTERS[i as usize];
 
-            dbg!(loc);
-            
-
             MEMORY[loc as usize] = (_size / 256) as u8;
             MEMORY[(loc + 1) as usize] = (_size % 256) as u8;
 
             // if the size is equal to the requested size, then we can remove this pointer
             if SIZES[i as usize] == _size + 2 {
-
                 if LAST_POINTER as usize == i {
                     POINTERS[i as usize] = 0;
                     SIZES[i as usize] = 0;
