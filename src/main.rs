@@ -26,14 +26,20 @@ unsafe fn write(mut loc: u16, data: &[u8]) {
 unsafe fn alloc(_size: u16) -> u16 {
     for i in 1..POINTERS.len() { // start at 1 because 0 is the tail
 
+        dbg!(i);
+        dbg!(SIZES[i as usize]);
+
         // if the size is 0, then we have reached the end of the important pointers
         if SIZES[i as usize] == 0 {
             break;
         }
 
         // if the size is greater than or equal to the requested size, then we can use this location
-        else if SIZES[i as usize] >= _size + 2 {
+        if SIZES[i as usize] >= _size + 2 {
             let loc = POINTERS[i as usize];
+
+            dbg!(loc);
+            
 
             MEMORY[loc as usize] = (_size / 256) as u8;
             MEMORY[(loc + 1) as usize] = (_size % 256) as u8;
@@ -42,7 +48,8 @@ unsafe fn alloc(_size: u16) -> u16 {
             if SIZES[i as usize] == _size + 2 {
 
                 if LAST_POINTER as usize == i {
-                    LAST_POINTER -= 1;
+                    POINTERS[i as usize] = 0;
+                    SIZES[i as usize] = 0;
                 }
                 else {
                     // move the last pointer to the current pointers location
@@ -52,10 +59,10 @@ unsafe fn alloc(_size: u16) -> u16 {
                     // clear the last pointer
                     POINTERS[LAST_POINTER as usize] = 0; // Breaks if it is the last pointer : FIX THIS
                     SIZES[LAST_POINTER as usize] = 0;
-
+                }
+                
                     // decrement the last pointer
                     LAST_POINTER -= 1;
-                }
             }
             // if the size is greater than the requested size, then we can move the pointer and reduce the size
             else {
@@ -76,7 +83,7 @@ unsafe fn alloc(_size: u16) -> u16 {
     return loc;
 }
 
-unsafe fn dealloc(loc: u16) { // if pointer[0] is < a pointer
+unsafe fn dealloc(loc: u16) {
     let _size = MEMORY[loc as usize] as u16 * 256 + MEMORY[(loc + 1) as usize] as u16;
     let new_loc = loc + _size + 2;
 
@@ -117,7 +124,7 @@ unsafe fn dealloc(loc: u16) { // if pointer[0] is < a pointer
     }
     
     for i in 1..POINTERS.len() {
-        if POINTERS[i as usize] == 0 {
+        if SIZES[i as usize] == 0 {
             break;
         }
 
@@ -204,26 +211,7 @@ fn main() {unsafe{
 
     dealloc(test5);
     dealloc(test1);
-    dealloc(test4);
-    dealloc(test3);
-    dealloc(test6);
-    dealloc(test7);
-    dealloc(test8);
-    dealloc(test);
-    dealloc(test2);
-
-    let test = alloc(8);
     let test1 = alloc(8);
-    let test2 = alloc(8);
-    let test3 = alloc(8);
-    let test4 = alloc(8);
-    let test5 = alloc(8);
-    let test6 = alloc(8);
-    let test7 = alloc(8);
-    let test8 = alloc(8);
-
-    dealloc(test5);
-    dealloc(test1);
     dealloc(test4);
     dealloc(test3);
     dealloc(test6);
@@ -231,17 +219,12 @@ fn main() {unsafe{
     dealloc(test8);
     dealloc(test);
     dealloc(test2);
+    dealloc(test1);
 
-
-    dbg!(POINTERS[0]);
     dbg!(LAST_POINTER);
-
-
-    for i in 1..5 {
+    for i in 0..5 {
         dbg!(POINTERS[i]);
         dbg!(SIZES[i]);
     }
 }}
 
-// Still breaks if an inner chunk is deallocated, then the outer chunk is deallocated (pointer[0] doesent go down)
-// test overwriting last part thing (i think its fine due to 0 indexing)
