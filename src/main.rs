@@ -211,17 +211,31 @@ fn main() {unsafe{
     dealloc(test8);
     dealloc(test);
     dealloc(test2);
+
+    let test = alloc(8);
+    let test1 = alloc(8);
+    let test2 = alloc(8);
+    let test3 = alloc(8);
+    let test4 = alloc(8);
+    let test5 = alloc(8);
+    let test6 = alloc(8);
+    let test7 = alloc(8);
+    let test8 = alloc(8);
+
+    dealloc(test5);
+    dealloc(test1);
+    dealloc(test4);
+    dealloc(test3);
+    dealloc(test6);
+    dealloc(test7);
+    dealloc(test8);
+    dealloc(test);
+    dealloc(test2);
+
+
     dbg!(POINTERS[0]);
     dbg!(LAST_POINTER);
 
-    
-    // dbg!(POINTERS[0]);
-    // dbg!(LAST_POINTER);
-
-    // for i in 1..5 {
-    //     dbg!(POINTERS[i]);
-    //     dbg!(SIZES[i]);
-    // }
 
     for i in 1..5 {
         dbg!(POINTERS[i]);
