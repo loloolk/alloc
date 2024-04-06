@@ -80,9 +80,12 @@ unsafe fn dealloc(loc: u16) { // if pointer[0] is < a pointer
     let _size = MEMORY[loc as usize] as u16 * 256 + MEMORY[(loc + 1) as usize] as u16;
     let new_loc = loc + _size + 2;
 
-    if new_loc == POINTERS[0] { // Works
+    // if the new location is the tail
+    if new_loc == POINTERS[0] {
+        // set the tail to the current location
         POINTERS[0] = loc;
 
+// check if the last chunk of space is free as well
         for i in 1..POINTERS.len() {
             if SIZES[i as usize] == 0 {
                 break;
@@ -95,10 +98,12 @@ unsafe fn dealloc(loc: u16) { // if pointer[0] is < a pointer
                     SIZES[i as usize] = 0;
                 }
                 else {
+// move the last pointer to the current pointers location
                     POINTERS[i as usize] = POINTERS[LAST_POINTER as usize];
                     SIZES[i as usize] = SIZES[LAST_POINTER as usize];
 
-                    POINTERS[LAST_POINTER as usize] = 0;
+                    // clear the last pointer
+                    POINTERS[LAST_POINTER as usize] = 0; // Breaks if it is the last pointer : FIX THIS
                     SIZES[LAST_POINTER as usize] = 0;
 
                 }
@@ -157,7 +162,7 @@ unsafe fn dealloc(loc: u16) { // if pointer[0] is < a pointer
                 }
 
                 else if POINTERS[j as usize] + SIZES[j as usize] == loc {
-                    POINTERS[j as usize] += _size + 2;
+                    SIZES[j as usize] += SIZES[i as usize];
 
                     if LAST_POINTER as usize == i {
                         POINTERS[i as usize] = 0;
@@ -197,15 +202,15 @@ fn main() {unsafe{
     let test7 = alloc(8);
     let test8 = alloc(8);
 
-    dealloc(test1);
     dealloc(test5);
-    // dealloc(test8);
-    dealloc(test2);
+    dealloc(test1);
+    dealloc(test4);
     dealloc(test3);
     dealloc(test6);
-    dealloc(test4);
     dealloc(test7);
+    dealloc(test8);
     dealloc(test);
+    dealloc(test2);
     dbg!(POINTERS[0]);
     dbg!(LAST_POINTER);
 
