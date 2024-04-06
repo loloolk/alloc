@@ -80,35 +80,29 @@ unsafe fn dealloc(loc: u16) { // if pointer[0] is < a pointer
     let _size = MEMORY[loc as usize] as u16 * 256 + MEMORY[(loc + 1) as usize] as u16;
     let new_loc = loc + _size + 2;
 
-    // if the new location is the tail
-    if new_loc == POINTERS[0] {
-        // set the tail to the current location
+    if new_loc == POINTERS[0] { // Works
         POINTERS[0] = loc;
 
-        // check if the last chunk of space is free as well
         for i in 1..POINTERS.len() {
             if SIZES[i as usize] == 0 {
                 break;
             }
-            else if POINTERS[0] - SIZES[i as usize] == POINTERS[i as usize] {
-                POINTERS[0] -= SIZES[i as usize];
-                SIZES[i as usize] = 0;
+            else if POINTERS[i as usize] + SIZES[i as usize] == loc {
+                POINTERS[0] = POINTERS[i as usize];
 
-                // if i as u16 == LAST_POINTER {
-                //     LAST_POINTER -= 1;
-                // }
-                // else {
-                //     // move the last pointer to the current pointers location
-                //     POINTERS[i as usize] = POINTERS[LAST_POINTER as usize];
-                //     SIZES[i as usize] = SIZES[LAST_POINTER as usize];
+                if LAST_POINTER as usize == i {
+                    POINTERS[i as usize] = 0;
+                    SIZES[i as usize] = 0;
+                }
+                else {
+                    POINTERS[i as usize] = POINTERS[LAST_POINTER as usize];
+                    SIZES[i as usize] = SIZES[LAST_POINTER as usize];
 
-                //     // clear the last pointer
-                //     POINTERS[LAST_POINTER as usize] = 0; // Breaks if it is the last pointer : FIX THIS
-                //     SIZES[LAST_POINTER as usize] = 0;
+                    POINTERS[LAST_POINTER as usize] = 0;
+                    SIZES[LAST_POINTER as usize] = 0;
 
-                //     // decrement the last pointer
-                //     LAST_POINTER -= 1;
-                // }
+                }
+                LAST_POINTER -= 1;
 
                 break;
             }
@@ -116,23 +110,72 @@ unsafe fn dealloc(loc: u16) { // if pointer[0] is < a pointer
 
         return;
     }
-
+    
     for i in 1..POINTERS.len() {
-        if SIZES[i as usize] == 0 {
+        if POINTERS[i as usize] == 0 {
             break;
         }
+
+        if POINTERS[i as usize] + SIZES[i as usize] == loc {
+            SIZES[i as usize] += _size + 2;
+
+            for j in 1..POINTERS.len() {
+                if SIZES[j as usize] == 0 {
+                    break;
+                }
+
+                else if POINTERS[j as usize] == new_loc {
+                    SIZES[i as usize] += SIZES[j as usize];
+
+                    if LAST_POINTER as usize == j {
+                        POINTERS[j as usize] = 0;
+                        SIZES[j as usize] = 0;
+                    }
+                    else {
+                        POINTERS[j as usize] = POINTERS[LAST_POINTER as usize];
+                        SIZES[j as usize] = SIZES[LAST_POINTER as usize];
+
+                        POINTERS[LAST_POINTER as usize] = 0;
+                        SIZES[LAST_POINTER as usize] = 0;
+                    }
+                    LAST_POINTER -= 1;
+
+                    break;
+                }
+            }
+        
+            return;
+        }
+    
         if POINTERS[i as usize] == new_loc {
             POINTERS[i as usize] = loc;
             SIZES[i as usize] += _size + 2;
-        }
-    }
-    for i in 1..POINTERS.len() {
-        if SIZES[i as usize] == 0 {
-            break;
-        }
-        if POINTERS[i as usize] + SIZES[i as usize] == loc {
-            POINTERS[i as usize] = loc;
-            SIZES[i as usize] += _size + 2;
+
+            for j in 1..POINTERS.len() {
+                if SIZES[j as usize] == 0 {
+                    break;
+                }
+
+                else if POINTERS[j as usize] + SIZES[j as usize] == loc {
+                    POINTERS[j as usize] += _size + 2;
+
+                    if LAST_POINTER as usize == i {
+                        POINTERS[i as usize] = 0;
+                        SIZES[i as usize] = 0;
+                    }
+                    else {
+                        POINTERS[i as usize] = POINTERS[LAST_POINTER as usize];
+                        SIZES[i as usize] = SIZES[LAST_POINTER as usize];
+
+                        POINTERS[LAST_POINTER as usize] = 0;
+                        SIZES[LAST_POINTER as usize] = 0;
+                    }
+                    LAST_POINTER -= 1;
+
+                    break;
+                }
+            }
+            return;
         }
     }
 
@@ -154,17 +197,17 @@ fn main() {unsafe{
     let test7 = alloc(8);
     let test8 = alloc(8);
 
-    dealloc(test3);
     dealloc(test1);
-    dealloc(test2);
-    dealloc(test4);
     dealloc(test5);
-    dealloc(test7);
+    // dealloc(test8);
+    dealloc(test2);
+    dealloc(test3);
     dealloc(test6);
-    dealloc(test8);
-    // dealloc(test);
-    // dbg!(POINTERS[0]);
-    // dbg!(LAST_POINTER);
+    dealloc(test4);
+    dealloc(test7);
+    dealloc(test);
+    dbg!(POINTERS[0]);
+    dbg!(LAST_POINTER);
 
     
     // dbg!(POINTERS[0]);
