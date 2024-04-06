@@ -80,9 +80,12 @@ unsafe fn dealloc(loc: u16) { // if pointer[0] is < a pointer
     let _size = MEMORY[loc as usize] as u16 * 256 + MEMORY[(loc + 1) as usize] as u16;
     let new_loc = loc + _size + 2;
 
+    // if the new location is the tail
     if new_loc == POINTERS[0] {
+        // set the tail to the current location
         POINTERS[0] = loc;
 
+        // check if the last chunk of space is free as well
         for i in 1..POINTERS.len() {
             if SIZES[i as usize] == 0 {
                 break;
@@ -90,6 +93,23 @@ unsafe fn dealloc(loc: u16) { // if pointer[0] is < a pointer
             else if POINTERS[0] - SIZES[i as usize] == POINTERS[i as usize] {
                 POINTERS[0] -= SIZES[i as usize];
                 SIZES[i as usize] = 0;
+
+                // if i as u16 == LAST_POINTER {
+                //     LAST_POINTER -= 1;
+                // }
+                // else {
+                //     // move the last pointer to the current pointers location
+                //     POINTERS[i as usize] = POINTERS[LAST_POINTER as usize];
+                //     SIZES[i as usize] = SIZES[LAST_POINTER as usize];
+
+                //     // clear the last pointer
+                //     POINTERS[LAST_POINTER as usize] = 0; // Breaks if it is the last pointer : FIX THIS
+                //     SIZES[LAST_POINTER as usize] = 0;
+
+                //     // decrement the last pointer
+                //     LAST_POINTER -= 1;
+                // }
+
                 break;
             }
         }
@@ -97,46 +117,22 @@ unsafe fn dealloc(loc: u16) { // if pointer[0] is < a pointer
         return;
     }
 
-    for mut i in 1..POINTERS.len() { // Breaks if the new loc is a different pointer
+    for i in 1..POINTERS.len() {
         if SIZES[i as usize] == 0 {
             break;
         }
-        else if POINTERS[i as usize] == new_loc {
-            dbg!(i);
-            dbg!(POINTERS[i as usize]);
+        if POINTERS[i as usize] == new_loc {
             POINTERS[i as usize] = loc;
             SIZES[i as usize] += _size + 2;
-
-            for j in 1..POINTERS.len() { // Make sure the past pointer is also merged
-                if SIZES[j as usize] == 0 {
-                    break;
-                }
-                else if POINTERS[j as usize] + SIZES[j as usize] == POINTERS[i as usize] {
-                    POINTERS[i as usize] = 0;
-                    SIZES[j as usize] += SIZES[i as usize];
-                    SIZES[i as usize] = 0;
-
-                    if LAST_POINTER as usize == i {
-                        LAST_POINTER -= 1;
-                    }
-                    else {
-                        // move the last pointer to the current pointers location
-                        POINTERS[i as usize] = POINTERS[LAST_POINTER as usize];
-                        SIZES[i as usize] = SIZES[LAST_POINTER as usize];
-
-                        // clear the last pointer
-                        POINTERS[LAST_POINTER as usize] = 0; // Breaks if it is the last pointer : FIX THIS
-                        SIZES[LAST_POINTER as usize] = 0;
-
-                        // decrement the last pointer
-                        LAST_POINTER -= 1;
-                    }
-                    
-                    break;
-                }
-            }
-
-            return;
+        }
+    }
+    for i in 1..POINTERS.len() {
+        if SIZES[i as usize] == 0 {
+            break;
+        }
+        if POINTERS[i as usize] + SIZES[i as usize] == loc {
+            POINTERS[i as usize] = loc;
+            SIZES[i as usize] += _size + 2;
         }
     }
 
@@ -153,19 +149,35 @@ fn main() {unsafe{
     let test2 = alloc(8);
     let test3 = alloc(8);
     let test4 = alloc(8);
+    let test5 = alloc(8);
+    let test6 = alloc(8);
+    let test7 = alloc(8);
+    let test8 = alloc(8);
 
     dealloc(test3);
-    dbg!(LAST_POINTER);
     dealloc(test1);
-    dbg!(LAST_POINTER);
     dealloc(test2);
-    dbg!(LAST_POINTER);
     dealloc(test4);
-    dbg!(POINTERS[0]);
-    dbg!(LAST_POINTER);
+    dealloc(test5);
+    dealloc(test7);
+    dealloc(test6);
+    dealloc(test8);
+    // dealloc(test);
+    // dbg!(POINTERS[0]);
+    // dbg!(LAST_POINTER);
 
-    for i in 1..3 {
+    
+    // dbg!(POINTERS[0]);
+    // dbg!(LAST_POINTER);
+
+    // for i in 1..5 {
+    //     dbg!(POINTERS[i]);
+    //     dbg!(SIZES[i]);
+    // }
+
+    for i in 1..5 {
         dbg!(POINTERS[i]);
+        dbg!(SIZES[i]);
     }
 }}
 
